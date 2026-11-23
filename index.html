@@ -136,5 +136,21 @@ morePage=function(){if(more==='Configuratie')return `<div class="spread"><h2>⚙
 render=function(){if(!S.setup){setup();return}if(!S.players.some(p=>p.id===localStorage.getItem('galway-current-player'))){choosePlayer();return}let tabs=[['Home','⌂'],['Pubs','🍺'],['Pubopdrachten','📍'],['Challenges','🎡'],['Vragen','💬'],['Bingo','🎯'],['Meer','☘']];$('#nav').innerHTML=tabs.map(([p,i])=>`<button class="${page===p?'active':''}" onclick="go('${p}')"><span>${i}</span>${p==='Pubopdrachten'?'Pub-opdr.':p}</button>`).join('');let views={Home:home,Pubs:pubPage,Pubopdrachten:pubTaskPage,Challenges:slotPage,Slot:slotPage,Vragen:questionsPage,Bingo:bingoPage,Scores:scorePage,Meer:morePage,Rad:wheelPage};$('#app').innerHTML=(views[page]||home)();if(page==='Rad'||page==='Meer'&&more==='Rad')drawWheel();if(page==='Meer'&&more==='Fotoalbum')loadPhotos()};
 ensureBingoBoards();
 
+// De uitleg volgt de huidige puntregels en verwijst terug naar het onderdeel waar je was.
+let pointsReturn=null;
+function openPointsInfo(){pointsReturn={page,more};sub('Puntenuitleg')}
+function pointsBack(){if(!pointsReturn){sub('Meer');return}let target=pointsReturn;pointsReturn=null;page=target.page;more=target.more;render();window.scrollTo(0,0)}
+function pointsLink(){return `<p class="muted"><a href="#puntenuitleg" onclick="event.preventDefault();openPointsInfo()">ⓘ Hoe werken de punten?</a></p>`}
+const ptsPubPage=pubPage,ptsPubTaskPage=pubTaskPage,ptsSlotPage=slotPage,ptsBingoPage=bingoPage,ptsScorePage=scorePage,ptsPlanPage=planPage,ptsChallengePage=challengePage,ptsMorePage=morePage;
+pubPage=function(){return pointsLink()+ptsPubPage()};
+pubTaskPage=function(){return pointsLink()+ptsPubTaskPage()};
+slotPage=function(){return pointsLink()+ptsSlotPage()};
+bingoPage=function(){return pointsLink()+ptsBingoPage()};
+scorePage=function(){return pointsLink()+ptsScorePage()};
+planPage=function(){return pointsLink()+ptsPlanPage()};
+challengePage=function(){return pointsLink()+ptsChallengePage()};
+function pointsInfoPage(){return `<div class="spread"><h2>⭐ Zo verdien je punten</h2><button class="secondary" onclick="pointsBack()">← Terug</button></div><p class="muted">De stand wordt automatisch bijgewerkt zodra je punten opslaat.</p>${card('🍺 Pub bezoeken',`<p><b>+1 punt per bezoeker.</b> Vink een pub af en kies wie erbij was. Pas je de bezoekers later aan, dan worden de punten opnieuw berekend.</p>`)}${card('📍 Pubopdrachten',`<p><b>+5 punten per speler per opdracht.</b> Kies een pub, draai vijf opdrachten en vink per opdracht aan wie deze heeft gehaald. Je kunt die keuze later aanpassen.</p>`)}${card('🎡 Zit-challenges',`<p><b>Meestal +2 punten per geselecteerde speler.</b> Draai een challenge en kies bij ‘Gelukt’ een speler of iedereen. Het aantal punten staat bij de opdracht.</p>`)}${card('🎯 Gezamenlijke bingo',`<p><b>+10 punten voor iedere speler</b> wanneer alle vakjes op het bord zijn afgevinkt. De bonus wordt één keer per bord toegekend. Daarna kun je een nieuw bord openen.</p>`)}${card('📸 Groepsfoto’s & eigen challenges',`<p>Een groepsfoto levert punten op als jullie deze als <b>groepsfoto-challenge afvinken</b>. Selecteer daarbij iedereen die punten krijgt. De puntenwaarde staat bij de challenge en kun je bij eigen challenges instellen.</p><p class="muted">Een foto alleen toevoegen aan het album geeft geen automatische punten.</p>`)}${card('⭐ Bonus- en strafpunten',`<p>Via <b>Meer → Scores → + / − Punten</b> kun je per speler handmatig punten toevoegen of aftrekken, eventueel met een reden.</p>`)}<p class="muted">Vragen en het afvinken van een activiteit zonder gekoppelde challenge geven geen punten.</p>`}
+morePage=function(){if(more==='Puntenuitleg')return pointsInfoPage();let result=ptsMorePage();if(more==='Meer')result+=`<div class="card spread"><b>⭐ Uitleg punten</b><button class="secondary" onclick="openPointsInfo()">Bekijk →</button></div>`;return result};
+
 if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./service-worker.js').catch(console.error);render();
 </script></body></html>
