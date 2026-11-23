@@ -1,0 +1,30 @@
+GALWAY: SLÁINTE, EEJITS!
+
+Inhoud: index.html, manifest.json, service-worker.js, icon-192.png en icon-512.png.
+Zet deze vijf bestanden samen in dezelfde map op een HTTPS-host. Open niet rechtstreeks met file://: dan werkt de service worker niet.
+
+GRATIS HOSTEN MET GITHUB PAGES
+1. Maak op github.com een repository, bijvoorbeeld galway-trip. Let op: een publieke repository is voor iedereen toegankelijk.
+2. Upload de vijf appbestanden naar de hoofdmap van de repository (niet naar een submap).
+3. Ga naar Settings > Pages > Build and deployment. Kies Deploy from a branch, branch main en map /(root). Klik Save.
+4. Wacht op de publicatie en open de getoonde HTTPS-link op je telefoon.
+
+IPHONE
+Open de link in Safari. Tik op de deelknop, kies Zet op beginscherm en schakel indien getoond 'Open als webapp' in. Tik op Voeg toe.
+
+ANDROID
+Open de link in Chrome. Tik op de drie puntjes en kies App installeren of Toevoegen aan startscherm.
+
+OFFLINE TESTEN
+Open de app de eerste keer met internet; wacht even en vul spelers in. Sluit de app, schakel vliegtuigmodus in, open de geïnstalleerde app opnieuw en probeer een pub, score en foto. Schakel internet daarna weer in. Werkt dit niet: open de HTTPS-link opnieuw terwijl je online bent, wacht tot de bestanden geladen zijn en probeer het nogmaals.
+
+BELANGRIJK
+- Data staat per apparaat: er is geen automatische synchronisatie. Gebruik voor de groep bij voorkeur één toestel.
+- Maak via Meer > Back-up regelmatig een JSON-export. Foto's staan er niet in: download ze afzonderlijk uit het fotoalbum. Een JSON-import vervangt tekstgegevens; foto's worden niet teruggezet via de app.
+- Browsers kunnen opslag wissen, bijvoorbeeld bij weinig ruimte, na lange inactiviteit of bij verwijderen van websitegegevens of de app. Bewaar back-ups buiten je telefoon.
+- Offline werkt pas na het eerste succesvolle online bezoek, installatie van de service worker en downloaden van alle bestanden. Na een app-update moet het toestel weer online zijn om de nieuwe versie op te halen.
+- Een publiek gehoste app is voor iedereen met de link bereikbaar. De ingevoerde gegevens staan lokaal, maar zet geen gevoelige informatie in de bronbestanden.
+- De route voor schulden gebruikt een praktische vereenvoudiging; die is niet gegarandeerd het absolute minimum aan betalingen.
+- Voorgestelde activiteiten zijn geen boekingen en hebben geen vooraf ingestelde tijden. Pas ze aan. Het beginscherm toont de open activiteiten van vandaag; er zijn geen eindtijden of automatische koppeling van het rad aan toeristische activiteiten.
+- Foto's download je los. De standaard camera-functie hangt af van het toestel en de browser.
+- De twee genoemde Neachtain-namen kunnen naar dezelfde locatie verwijzen; controleer jullie lijst en verwijder zo nodig de dubbele vermelding.
