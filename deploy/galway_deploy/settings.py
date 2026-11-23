@@ -19,6 +19,7 @@ INFRA_DIR = REPO_ROOT / "infra"
 APP_FILES = (
     "index.html",
     "duels.js",
+    "sync.js",
     "config.js",
     "manifest.json",
     "service-worker.js",

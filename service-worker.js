@@ -1,5 +1,5 @@
-const CACHE='galway-v6';
-const FILES=['./','./index.html','./config.js','./sync.js','./manifest.json','./icon-192.png','./icon-512.png'];
+const CACHE='galway-v7';
+const FILES=['./','./index.html','./config.js','./sync.js','./duels.js','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
