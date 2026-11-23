@@ -1,5 +1,30 @@
 const CACHE='galway-v6';
-const FILES=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('galway-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;e.respondWith(caches.match(e.request).then(hit=>hit||fetch(e.request)));});
+const FILES=['./','./index.html','./config.js','./sync.js','./manifest.json','./icon-192.png','./icon-512.png'];
+
+self.addEventListener('install',event=>{
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
+});
+
+self.addEventListener('activate',event=>{
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('galway-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+});
+
+/* Vraag de bestanden op bij de server en val terug op de cache. Daarmee werkt
+ * de app offline, maar ziet een telefoon wel meteen een nieuwe versie; een
+ * cache-eerst-strategie houdt gebruikers tot een volgende SW-versie vast, en
+ * "mijn wijziging staat er niet" was het eerste wat daar misging. */
+self.addEventListener('fetch',event=>{
+  const url=new URL(event.request.url);
+  if(event.request.method!=='GET'||url.origin!==location.origin||url.pathname.startsWith('/api/'))return;
+  event.respondWith(
+    fetch(event.request)
+      .then(response=>{
+        if(response.ok){
+          const copy=response.clone();
+          caches.open(CACHE).then(cache=>cache.put(event.request,copy));
+        }
+        return response;
+      })
+      .catch(()=>caches.match(event.request,{ignoreSearch:true}).then(hit=>hit||caches.match('./index.html')))
+  );
+});

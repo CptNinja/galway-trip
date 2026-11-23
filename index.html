@@ -176,5 +176,8 @@ slotPage=function(){let current=(S.pubDeck||[]).find(x=>x.id===S.slotCurrent),re
 const beforeEmbeddedWheelRender=render;
 render=function(){beforeEmbeddedWheelRender();if(S.setup&&S.players.some(p=>p.id===localStorage.getItem('galway-current-player'))&&(page==='Challenges'||page==='Slot'))drawWheel()};
 
+// Brug voor de losse bestanden eronder (sync.js, duels.js): draaien in eigen
+// bestand, maar hebben de live-status en een paar helpers van hier nodig.
+window.Galway={get state(){return S},set state(v){S=v},save:()=>save(),render:()=>render(),item:o=>item(o),uid:()=>uid(),now:()=>now(),points:(ids,aantal,label,bron)=>addPoints(ids,aantal,label,bron),clearPoints:bron=>removeSource(bron)};
 if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./service-worker.js').catch(console.error);render();
-</script></body></html>
+</script><script src="./config.js"></script><script src="./sync.js"></script></body></html>

@@ -1,0 +1,11 @@
+# Python en Terraform werkbestanden
+.venv/
+__pycache__/
+*.pyc
+.terraform/
+infra/.build/
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+.galway-room.json
+.galway/
+.DS_Store
