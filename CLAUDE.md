@@ -27,10 +27,10 @@ python3 lokale_testserver.py      # serves the folder at http://127.0.0.1:8765/ 
 
 - Windows users double-click `Start-Galway.cmd` (it just runs the same server).
 - **Never verify by opening `index.html` via `file://`** — the app only registers its service worker when `location.protocol !== 'file:'`, so nothing is cached and offline behaviour cannot be tested that way. Use the dev server above. `LEESMIJ.txt` says the same.
-- There is no test framework, but `controle/` holds six dependency-free Node checks that drive
+- There is no test framework, but `controle/` holds seven dependency-free Node checks that drive
   the real app; run them after any UI change. `wedstrijd.mjs` and `migratie.mjs` need nothing but
   Node (they share the stubbed DOM in `controle/namaak.mjs`; duels and the content migration are
-  played out there). The other four need Chrome listening on the DevTools port plus the dev
+  played out there). The other five need Chrome listening on the DevTools port plus the dev
   server — the exact commands are in the header of `controle/ontwerp.mjs`:
 
 ```bash
@@ -40,11 +40,16 @@ node controle/inhoud.mjs       # vraag- en kaartteksten op slop, dubbelingen en 
 node controle/ontwerp.mjs      # ontwerpaudit tegen DESIGN.md + schermafbeeldingen
 node controle/pwa.mjs          # manifest, service worker, voorcache, offline herladen
 node controle/rondloop.mjs     # elke tab en subpagina aflopen, belangrijkste knoppen klikken
+node controle/synccheck.mjs    # browser tegen de echte sync-api: halen, preflight, duwen
 ```
 
   Pass a deployed URL plus the word `blokkeer` to audit production without pushing test state into
-  the shared room. The deploy package has real unit tests:
-  `.venv/bin/python -m unittest discover -s deploy/tests`.
+  the shared room. `synccheck.mjs` is the exception: it needs the real API, so it either writes to
+  the dev server (that is what `node controle/synccheck.mjs` does) or it runs against the deployed
+  site with the word `alleen-lezen`, which blocks every `PUT` in the browser. It replaces the room
+  in `config.js` with the throwaway room `controle` before the page reads it — if the page still
+  talks to a real room, the check aborts instead of writing.
+  The deploy package has real unit tests: `.venv/bin/python -m unittest discover -s deploy/tests`.
 - Offline behaviour (the main product requirement) is checked by `controle/pwa.mjs`; the manual
   route is still described in `LEESMIJ.txt`: first load online, then flight mode, then reopen.
 
@@ -62,8 +67,8 @@ node controle/rondloop.mjs     # elke tab en subpagina aflopen, belangrijkste kn
 | `DESIGN.md` | The design system: colour tokens, type scale, shape rules, and the list of visual tells the audit refuses. |
 | `duels.js` | The 1-on-1 "Wedstryd" mode: eight round types, scoring through `S.transactions`, its own pages under Meer. |
 | `sync.js` | Optional room sync: pull/merge/push with revisions and tombstones (see architecture). |
-| `config.js` | Public runtime config (`window.GALWAY_CONFIG`); the committed copy keeps sync switched off. |
-| `controle/` | Six dependency-free Node checks (content, migration, design audit, PWA/offline, click-through, duel logic) plus the shared stubbed DOM `namaak.mjs`. Screenshots land in `controle/scherm/`, which is ignored. |
+| `config.js` | Public runtime config (`window.GALWAY_CONFIG`); the committed copy leaves `api` empty, so a checkout never syncs. |
+| `controle/` | Seven dependency-free Node checks (content, migration, design audit, PWA/offline, click-through, duel logic, live sync) plus the shared stubbed DOM `namaak.mjs`. Screenshots land in `controle/scherm/`, which is ignored. |
 | `api/room_api.py` | Lambda handler for room sync: one JSON document per room, revision-checked writes, key from SSM. |
 | `infra/` | Terraform: S3 + CloudFront + DynamoDB + Lambda + SSM parameter + IAM. |
 | `deploy/` | Python publisher: `deploy.py` plus the `galway_deploy` package and its unit tests. |
@@ -85,8 +90,8 @@ The file is one `<script>` block with a strict reading order. Logical line range
 | 111–112 | The other two data constants: `NEW_PUBS` (42 pubs + area) and `PUB_CHALLENGES` — 200 curated slot cards as `[categorie, tekst]` pairs. **Each line is 15–40 KB — always read them with a line range, never whole.** The old machine-generated blocks (`EXTRA_QUESTIONS`, `V6_QUESTIONS`, `V6_CHALLENGES`) are gone; do not reintroduce bulk content that way. |
 | 114–150 | Content reconciliation, run on every load: `vulInhoudAan()` adds curated items that are missing, `verwijderOudeInhoud()` drops earlier machine content (see below), `inhoudV4()` also fixes pub names. |
 | 152–266 | The **patch layer**: every later feature reassigns a base function. |
-| 246 | `window.Galway`, the bridge used by the separate scripts. |
-| 248 | `</script>`, then `<script src>` for `config.js`, `sync.js`, `duels.js`. |
+| 266 | `window.Galway`, the bridge used by the separate scripts. |
+| 268 | `</script>`, then `<script src>` for `config.js`, `sync.js`, `duels.js`. |
 
 Because most "lines" are entire functions or huge data arrays, use ranged reads (`read` with
 `index.html:NN-MM`) and precise edits. Do not reformat, prettify, or split the file — line-based
@@ -159,14 +164,23 @@ data (photos are not restorable). Keep those invariants in sync with `initial()`
 `LEESMIJ.txt` promises.
 
 **Multi-device sync (`sync.js`, optional).** `config.js` sets `window.GALWAY_CONFIG = {api, room,
-key, sync}`; with `sync: true` the client pulls the room document on load, merges it
-entity-by-entity by `updatedAt`, and pushes (debounced, only after local changes) with optimistic
-concurrency — a `409` returns the current document, which is merged and re-pushed. The server
-(`api/room_api.py`) is deliberately dumb: it stores one JSON document per room plus a revision,
-authenticates `x-galway-key`, and caps payloads; all merging is client-side. Deletions travel as
-tombstones inferred from what disappeared since the last push, and keys listed in `LOKAAL`
-(`questions`, `pubDeck`) never leave the device. Anything added to `S` that must not sync goes in
-that list.
+key, syncIntervalMs}`; sync starts as soon as `api` and `key` are filled — the committed copy leaves
+`api` empty, so nothing syncs until the dev server or the deploy fills it in (the dev server serves
+the relative `api: "/api"`). The client pulls the room document on load, merges it entity-by-entity
+by `updatedAt`, and pushes (debounced, only after local changes) with optimistic concurrency — a
+`409` returns the current document, which is merged and re-pushed. The server (`api/room_api.py`) is
+deliberately dumb: it stores one JSON document per room plus a revision, authenticates
+`x-galway-key`, and caps payloads; all merging is client-side. Deletions travel as tombstones
+inferred from what disappeared since the last push, and keys listed in `LOKAAL` (`questions`,
+`pubDeck`) never leave the device. Anything added to `S` that must not sync goes in that list.
+
+**CORS comes from one place only: the handler.** `api/room_api.py` answers `OPTIONS` before it
+checks the room key and sets the `access-control-*` headers itself. Never add a `cors` block to
+`aws_lambda_function_url` in `infra/api.tf`: AWS' managed function-URL CORS answers the preflight
+itself and pastes its own `access-control-allow-origin` next to the handler's, and two values in
+that header make every browser refuse the response — the app then just says "Sync mislukt", while
+curl, `urllib` and every Python test keep working. `controle/synccheck.mjs` is the check that
+catches it, because it asks a real browser.
 
 **Duel mode (`duels.js`).** Loads after the base app and reaches it only through `window.Galway`
 (`state`, `save`, `render`, `item`, `uid`, `now`, `points`, `clearPoints`) — `let S` is script-scoped,

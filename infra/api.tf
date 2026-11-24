@@ -123,18 +123,15 @@ resource "aws_lambda_function" "api" {
 
 # A function URL instead of API Gateway: one service less, no per-request price,
 # and the app only ever needs GET and PUT with a shared key header.
+#
+# No `cors` block on purpose. AWS' managed function-URL CORS answers the
+# preflight itself and pastes its own access-control-allow-origin next to the
+# one the handler already sets; two values in that header make every browser
+# refuse the response ("Sync mislukt"), while curl never notices. The handler
+# answers OPTIONS before it checks the room key, so it is the only CORS source.
 resource "aws_lambda_function_url" "api" {
   function_name      = aws_lambda_function.api.function_name
   authorization_type = "NONE"
-
-  # AWS accepts at most six characters per method here, so OPTIONS is not
-  # listed: preflight requests reach the function, which answers them itself.
-  cors {
-    allow_origins = local.cors_origins
-    allow_methods = ["GET", "PUT"]
-    allow_headers = ["content-type", "x-galway-key"]
-    max_age       = 600
-  }
 }
 
 # AuthType NONE still needs the function policy, and AWS checks two actions:
