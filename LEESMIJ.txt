@@ -1,13 +1,16 @@
 GALWAY: SLÁINTE, EEJITS!
 
-Inhoud: index.html, manifest.json, service-worker.js, icon-192.png en icon-512.png.
-Zet deze vijf bestanden samen in dezelfde map op een HTTPS-host. Open niet rechtstreeks met file://: dan werkt de service worker niet.
+Inhoud: index.html, duels.js, sync.js, config.js, manifest.json, service-worker.js, icon-192.png en icon-512.png.
+Zet die bestanden samen in dezelfde map. Open niet rechtstreeks met file://: dan werkt de service worker niet.
 
-GRATIS HOSTEN MET GITHUB PAGES
-1. Maak op github.com een repository, bijvoorbeeld galway-trip. Let op: een publieke repository is voor iedereen toegankelijk.
-2. Upload de vijf appbestanden naar de hoofdmap van de repository (niet naar een submap).
-3. Ga naar Settings > Pages > Build and deployment. Kies Deploy from a branch, branch main en map /(root). Klik Save.
-4. Wacht op de publicatie en open de getoonde HTTPS-link op je telefoon.
+DE APP OPENEN
+1. Open op je telefoon: https://d1luu4d2i8itxg.cloudfront.net/
+2. Wacht tot de pagina volledig is geladen (de app laadt zichzelf in de cache).
+3. Installeer hem zoals hieronder beschreven, zodat hij als app op je beginscherm staat.
+4. Daarna werkt alles zonder internet.
+
+ZELF HOSTEN
+De app heeft geen bouwstap: elk rustig HTTPS-adres met deze losse bestanden werkt ook, bijvoorbeeld GitHub Pages. Zet dan alle bestanden uit deze repository in de hoofdmap en kies die map als publicatiemap. Zonder aanpassing in config.js staat de synchronisatie uit en staat elke telefoon op zichzelf.
 
 IPHONE
 Open de link in Safari. Tik op de deelknop, kies Zet op beginscherm en schakel indien getoond 'Open als webapp' in. Tik op Voeg toe.
@@ -18,8 +21,18 @@ Open de link in Chrome. Tik op de drie puntjes en kies App installeren of Toevoe
 OFFLINE TESTEN
 Open de app de eerste keer met internet; wacht even en vul spelers in. Sluit de app, schakel vliegtuigmodus in, open de geïnstalleerde app opnieuw en probeer een pub, score en foto. Schakel internet daarna weer in. Werkt dit niet: open de HTTPS-link opnieuw terwijl je online bent, wacht tot de bestanden geladen zijn en probeer het nogmaals.
 
+GROEPSSYNCHRONISATIE
+De app kan elkaars gegevens overnemen tussen telefoons. Dat staat aan als bij het publiceren een kameradres en sleutel in config.js zijn gezet; anders doet de app niets met het internet en staat elke telefoon op zichzelf.
+- Synchronisatie werkt op de achtergrond: bij het openen worden wijzigingen opgehaald, en ná een lokale wijziging gaan ze weg.
+- Punten, spelers, pubs, challenges, uitgaven en de Wedstryd gaan mee. Foto's blijven op het toestel waar ze gemaakt zijn; alleen de bijschriften synchroniseren.
+- Twee telefoons tegelijk aan dezelfde rij: de meest recente bewerking wint per item.
+- Geen internet of geen server? Alles blijft werken zoals voorheen; er gaat niets lokaals verloren.
+
+DE APP BIJWERKEN
+Iedere wijziging gaat via deploy/deploy.py (zie CLAUDE.md): Terraform zet de infrastructuur neer, dat script publiceert de bestanden en zorgt dat telefoons de nieuwe versie ophalen. Wie publiceert, heeft de AWS-inlog van de groep nodig; de sleutel van de kamer staat in AWS SSM en komt nooit in de repository.
+
 BELANGRIJK
-- Data staat per apparaat: er is geen automatische synchronisatie. Gebruik voor de groep bij voorkeur één toestel.
+- Zonder kamersynchronisatie staat elke telefoon op zichzelf; met synchronisatie (hierboven) pak je elkaars wijzigingen over. Foto's blijven in beide gevallen lokaal.
 - Maak via Meer > Back-up regelmatig een JSON-export. Foto's staan er niet in: download ze afzonderlijk uit het fotoalbum. Een JSON-import vervangt tekstgegevens; foto's worden niet teruggezet via de app.
 - Browsers kunnen opslag wissen, bijvoorbeeld bij weinig ruimte, na lange inactiviteit of bij verwijderen van websitegegevens of de app. Bewaar back-ups buiten je telefoon.
 - Offline werkt pas na het eerste succesvolle online bezoek, installatie van de service worker en downloaden van alle bestanden. Na een app-update moet het toestel weer online zijn om de nieuwe versie op te halen.

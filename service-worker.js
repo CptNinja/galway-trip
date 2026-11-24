@@ -1,4 +1,4 @@
-const CACHE='galway-v7';
+const CACHE='galway-v8';
 const FILES=['./','./index.html','./config.js','./sync.js','./duels.js','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{

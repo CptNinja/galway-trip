@@ -79,12 +79,21 @@ class Handler(SimpleHTTPRequestHandler):
 
     protocol_version = "HTTP/1.1"
 
+    def end_headers(self) -> None:
+        """Zonder deze kop onthoudt de browser statische bestanden: bij het
+        ontwikkelen zie je dan je eigen wijziging niet."""
+        if not getattr(self, "_cachebeleid", ""):
+            self.send_header("cache-control", "no-cache")
+        self._cachebeleid = ""
+        super().end_headers()
+
     # ------------------------------------------------------------- helpers
 
     def _json(self, status: int, body: dict | None) -> None:
         payload = b"" if body is None else (body if isinstance(body, bytes) else json.dumps(body, ensure_ascii=False).encode())
         self.send_response(status)
         self.send_header("content-type", "application/json; charset=utf-8")
+        self._cachebeleid = "no-store"
         self.send_header("cache-control", "no-store")
         self.send_header("content-length", str(len(payload)))
         self.end_headers()

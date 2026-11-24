@@ -9,3 +9,5 @@ infra/terraform.tfstate.backup
 .galway-room.json
 .galway/
 .DS_Store
+# Schermafdrukken van de ontwerpaudit
+controle/scherm/

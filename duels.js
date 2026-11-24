@@ -331,7 +331,7 @@
     const history = (duel.slagen || []).slice(-8).reverse();
     const klaar = duel.status === 'klaar';
     const winner = settle(duel);
-    return `<div class="spread"><h2>⚔️ ${esc(names(duel.spelers[0]))} — ${esc(names(duel.spelers[1]))}</h2>${btn('← Terug', 'duelBack()')}</div>`
+    return `<div class="spread"><h2>${esc(names(duel.spelers[0]))} — ${esc(names(duel.spelers[1]))}</h2>${btn('← Terug', 'duelBack()')}</div>`
       + card('Stand', `<div class="spread">${score(duel)}</div>${klaar ? `<p class="muted">${winner ? esc(names(winner)) + ' wint: +' + WON + ' punten, ' + esc(names(winner === duel.spelers[0] ? duel.spelers[1] : duel.spelers[0])) + ' krijgt +' + LOST + '.' : 'Gelijkspel: +' + DRAW + ' punten voor allebei.'}</p>${btn('Verwijder', "duelDelete('" + duel.id + "')", 'secondary')}` : btn('Afsluiten', "duelFinish('" + duel.id + "')", 'secondary')}`)
       + (open ? roundCard(duel, open) : card('Kies een ronde', `<p class="muted">Kies een soort ronde, of laat het lot beslissen.</p>${types}<button onclick="duelRound('${duel.id}','')">Verras me</button>`))
       + (history.length ? card('Recent', history.map(ronde => `<p class="muted">${esc(label(ronde).naam)} → ${ronde.winnaar ? esc(names(ronde.winnaar)) : 'nog open'}</p>`).join('')) : '');
@@ -348,10 +348,10 @@
         return `<div class="card spread"><span>${score(duel)}</span><button class="secondary" onclick="duelOpen('${duel.id}')">${duel.status === 'klaar' ? 'Bekijk' : 'Verder'}</button></div>`;
       })
       .join('');
-    return `<div class="spread"><h2>⚔️ De Wedstryd</h2>${btn('← Terug', "sub('Meer')")}</div>`
+    return `<div class="spread"><h2>De Wedstryd</h2>${btn('← Terug', "sub('Meer')")}</div>`
       + (players.length < 2 ? card('Te weinig mensen', '<p class="muted">Zet eerst minstens twee spelers in de groep.</p>') : '')
-      + (players.length < 2 ? '' : card('Nieuwe wedstryd', `<p class="muted">Jij speelt tegen een lotgenoot die de app aanwijst; eerste die drie rondes pakt wint de strijd en de punten.</p>${btn('Begin een wedstryd', 'duelNew()')}`))
-      + (running.length ? rows(running) : card('Nog niets gespeeld', '<p class="muted">Een-op-een in rondes: Galway-trivia, spellering, blind proeven, een potje kaart, het duurste glas, een filmcitaat, een frame uit een serie of live hitster. Wie wint krijgt ' + WON + ' punten, wie verliest ' + LOST + '.</p>'))
+      + (players.length < 2 ? '' : card('Nieuwe wedstryd', `<p class="muted">Je tegenstander wordt uit de groep gepikt. Eerste die drie rondes pakt, wint.</p>${btn('Begin een wedstryd', 'duelNew()')}`))
+      + (running.length ? rows(running) : card('Nog niets gespeeld', '<p class="muted">Een-op-een om de punten: trivia, spellering, blind proeven of een potje kaart. Winnaar +' + WON + ', verliezer +' + LOST + '.</p>'))
       + (done.length ? card('Afgelopen', rows(done)) : '');
   }
 
@@ -519,6 +519,6 @@
 
   const priorPoints = pointsInfoPage;
   pointsInfoPage = function () {
-    return priorPoints.call(this) + card('⚔️ Wedstryd', `<p><b>+${WON} punten</b> voor wie een wedstryd wint, <b>+${LOST}</b> voor wie verliest en <b>+${DRAW}</b> allebei bij gelijke stand.</p><p class="muted">Er wordt afgerekend zodra een van allebei drie rondes heeft gepakt. Daarna nog een ronde spelen mag gewoon; dan wordt er opnieuw afgerekend.</p>`);
+    return priorPoints.call(this) + card('Wedstryd', `<p><b>+${WON} punten</b> voor wie een wedstryd wint, <b>+${LOST}</b> voor wie verliest en <b>+${DRAW}</b> allebei bij gelijke stand.</p><p class="muted">Er wordt afgerekend zodra een van allebei drie rondes heeft gepakt. Daarna nog een ronde spelen mag gewoon; dan wordt er opnieuw afgerekend.</p>`);
   };
 })();
