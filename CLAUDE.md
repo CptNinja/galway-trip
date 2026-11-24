@@ -27,13 +27,16 @@ python3 lokale_testserver.py      # serves the folder at http://127.0.0.1:8765/ 
 
 - Windows users double-click `Start-Galway.cmd` (it just runs the same server).
 - **Never verify by opening `index.html` via `file://`** — the app only registers its service worker when `location.protocol !== 'file:'`, so nothing is cached and offline behaviour cannot be tested that way. Use the dev server above. `LEESMIJ.txt` says the same.
-- There is no test framework, but `controle/` holds four dependency-free Node checks that drive
-  the real app; run them after any UI change. `wedstrijd.mjs` needs nothing but Node (stubbed DOM,
-  full duel played out). The other three need Chrome listening on the DevTools port plus the dev
+- There is no test framework, but `controle/` holds six dependency-free Node checks that drive
+  the real app; run them after any UI change. `wedstrijd.mjs` and `migratie.mjs` need nothing but
+  Node (they share the stubbed DOM in `controle/namaak.mjs`; duels and the content migration are
+  played out there). The other four need Chrome listening on the DevTools port plus the dev
   server — the exact commands are in the header of `controle/ontwerp.mjs`:
 
 ```bash
 node controle/wedstrijd.mjs    # duelregels in een namaak-DOM
+node controle/migratie.mjs     # wat een oud spel wordt na de inhoudsopknap
+node controle/inhoud.mjs       # vraag- en kaartteksten op slop, dubbelingen en feitenantwoorden controleren
 node controle/ontwerp.mjs      # ontwerpaudit tegen DESIGN.md + schermafbeeldingen
 node controle/pwa.mjs          # manifest, service worker, voorcache, offline herladen
 node controle/rondloop.mjs     # elke tab en subpagina aflopen, belangrijkste knoppen klikken
@@ -60,7 +63,7 @@ node controle/rondloop.mjs     # elke tab en subpagina aflopen, belangrijkste kn
 | `duels.js` | The 1-on-1 "Wedstryd" mode: eight round types, scoring through `S.transactions`, its own pages under Meer. |
 | `sync.js` | Optional room sync: pull/merge/push with revisions and tombstones (see architecture). |
 | `config.js` | Public runtime config (`window.GALWAY_CONFIG`); the committed copy keeps sync switched off. |
-| `controle/` | Four dependency-free Node checks (design audit, PWA/offline, click-through, duel logic). Screenshots land in `controle/scherm/`, which is ignored. |
+| `controle/` | Six dependency-free Node checks (content, migration, design audit, PWA/offline, click-through, duel logic) plus the shared stubbed DOM `namaak.mjs`. Screenshots land in `controle/scherm/`, which is ignored. |
 | `api/room_api.py` | Lambda handler for room sync: one JSON document per room, revision-checked writes, key from SSM. |
 | `infra/` | Terraform: S3 + CloudFront + DynamoDB + Lambda + SSM parameter + IAM. |
 | `deploy/` | Python publisher: `deploy.py` plus the `galway_deploy` package and its unit tests. |
@@ -75,13 +78,13 @@ The file is one `<script>` block with a strict reading order. Logical line range
 | 2–67 | All CSS: custom properties (`--bg`, `--card`, `--vlak`, `--line`, `--ink`, `--muted`, `--gold`, `--alert`), one rule per line, ending with a `prefers-reduced-motion` block. This is the only place to style; `DESIGN.md` is the contract. |
 | 68 | Body shell: `<header>`, `<main id="app">`, `<nav id="nav">`, `<dialog id="modal">`, `#toast`, `<script>` opens. |
 | 69–70 | `'use strict'` and helpers: `$`, `uid`, `now`, `item`, `esc`, `fmt`. |
-| 71–74 | Seed content: `words` (Irish glossary), `preloadedPlayers`, `pubs`, `qsets` (question sets). |
-| 75 | `initial()` — the shape of a fresh state object. |
-| 76–79 | Load state from `localStorage`, merge in missing preloaded players, page variables. |
-| 80–105 | **Base app**: `save`, `render`, `choosePlayer`, `setup`, all page functions and the IndexedDB photo store — one function per line. Most of these are later overridden by the patch layer. |
-| 106–108 | Large v3 content constants: `NEW_PUBS` (42 pubs + area), `PUB_CHALLENGES` (400 slot cards, 8 categories × 50), `EXTRA_QUESTIONS` (500 questions). **Each line is 30–40 KB — always read them with a line range, never whole.** |
-| 111–126 | `applyGalwayV3()` content migration, run once on load. |
-| 127–247 | The **patch layer**: every later feature reassigns a base function. |
+| 71–76 | Seed content: `words` (Irish glossary), `preloadedPlayers`, `pubs`, and `qsets` — 250 curated questions in 10 Dutch categories, written as plain JSON so `controle/inhoud.mjs` can read it without executing the app. |
+| 77 | `initial()` — the shape of a fresh state object. |
+| 78–80 | Load state from `localStorage`, merge in missing preloaded players, page variables. |
+| 81–108 | **Base app**: `save`, `render`, `choosePlayer`, `setup`, all page functions and the IndexedDB photo store — one function per line. Most of these are later overridden by the patch layer. |
+| 111–112 | The other two data constants: `NEW_PUBS` (42 pubs + area) and `PUB_CHALLENGES` — 200 curated slot cards as `[categorie, tekst]` pairs. **Each line is 15–40 KB — always read them with a line range, never whole.** The old machine-generated blocks (`EXTRA_QUESTIONS`, `V6_QUESTIONS`, `V6_CHALLENGES`) are gone; do not reintroduce bulk content that way. |
+| 114–150 | Content reconciliation, run on every load: `vulInhoudAan()` adds curated items that are missing, `verwijderOudeInhoud()` drops earlier machine content (see below), `inhoudV4()` also fixes pub names. |
+| 152–266 | The **patch layer**: every later feature reassigns a base function. |
 | 246 | `window.Galway`, the bridge used by the separate scripts. |
 | 248 | `</script>`, then `<script src>` for `config.js`, `sync.js`, `duels.js`. |
 
@@ -137,16 +140,19 @@ in the points explainer (`pointsInfoPage`, `pointsLink`).
 settlement is a greedy largest-debt ↔ largest-credit loop (documented in `LEESMIJ.txt` as "not
 guaranteed minimal"). Format only via `fmt()` (nl-NL EUR). Never introduce float arithmetic.
 
-**Content migration.** `applyGalwayV3()` (lines 111–126) runs on every load and returns early when
-`S.contentVersion >= 3`. It adds `NEW_PUBS` (name-normalised dedupe, with an explicit alias rule
-for "The Front Door / Sonny Molloy's" vs "Sonny's"), deletes the duplicated "Séhan Ua Neáchtain"
-entry only if untouched, rebuilds `S.pubDeck`, and appends `EXTRA_QUESTIONS` by stable id.
-Note the consequence: **`initial()` does not contain `pubDeck` or the v3 questions** — a fresh
-state only gains them when `applyGalwayV3()` runs right after load. Never read `S.pubDeck` before
-that migration has run. When adding a content batch, follow the same shape: stable ids
-(`pub-v3-<slug>`, `question-v3-<n>`), idempotent insert, bump `contentVersion`, and preserve
-user data (visits, points, photos) — never reset it.
-
+**Content.** Two curated arrays ship as plain JSON: `qsets` (250 questions in 10 categories) and
+`PUB_CHALLENGES` (200 slot cards in 6 categories, `[categorie, tekst]` pairs). `initial()` seeds the
+questions; `vulInhoudAan()` fills whatever the state is missing. `inhoudV4()` reconciles on **every**
+load — there is deliberately no `contentVersion` gate, so adding curated text to the constants is
+enough and it also settles after a sync pull. `verwijderOudeInhoud()` removes what the earlier
+content generators shipped: ids that carry a content version (`question-v3-…`, `pubchallenge-v6-…`)
+and questions in categories that no longer exist. Questions in a curated category or in "Eigen
+vragen", and cards without such an id, are user work and always survive — so keep custom questions
+in one of those categories or the next load deletes them. `controle/migratie.mjs` pins this
+behaviour; `controle/inhoud.mjs` refuses duplicate, truncated, emoji-laden or unanswerable text.
+Factual items end in ` · Antwoord: <feit>`; the questions page tells the asker to read only up to
+the dash.
+ 
 **Backup / restore.** `exportData()` exports `structuredClone(S)` with `photos` emptied;
 `importData()` requires `version === 1` plus `players`/`pubs`/`questions` arrays and replaces text
 data (photos are not restorable). Keep those invariants in sync with `initial()` and with what
@@ -169,9 +175,13 @@ so a separate script cannot touch it directly; extend that bridge instead of rea
 keeps its state in `S.duels`. Points are ordinary transactions with a `duel:<id>` source, and a
 duel pays out once because `settle()` checks that source before awarding.
 
-**Design.** `DESIGN.md` is the contract for colours, type and shape, and lists the thirteen things
-the UI must not do (the "AI slop" tells). Styling belongs in the `<style>` block, not in injected
-`extraStyle` strings. `node controle/ontwerp.mjs` measures the running app against those rules.
+**Design.** `DESIGN.md` is the contract for colours, type, shape and icons, and lists the thirteen
+things the UI must not do (the "AI slop" tells). Styling belongs in the `<style>` block, not in
+injected `extraStyle` strings. Icons are inline SVG from the single `ico(naam)` helper; a button
+that only shows an icon is built with `ibtn(naam, tekst, actie)`, which guarantees the accessible
+name and the 44px hit area — an empty `<button></button>` is a bug (the design audit fails on it).
+Emoji is content, never chrome: never in navigation, headings, button labels or placeholders.
+`node controle/ontwerp.mjs` measures the running app against those rules.
 
 ## Deployment
 

@@ -69,6 +69,20 @@ Mag wél: één rustige animatie waar hij informatie overdraagt (het rad dat
 uitdraait, het slot dat rolt), kort en met een begin en een eind, en altijd
 stilstaand bij `prefers-reduced-motion`.
 
+## Iconen
+
+Waar een symbool iets moet aanduiden (bewerken, verwijderen, sluiten) staat een
+inline-tekening in een viewBox van 24 bij 24, lijndikte 1,7px in `currentColor`.
+Geen emoji, geen icoonfont, geen extern bestand — het symbool kleurt mee met de
+tekst en weegt niets in de download. Een knop met alleen een symbool is vierkant
+van 44 bij 44 en krijgt altijd een `aria-label` en `title`, zodat de functie ook
+in de toegankelijke naam staat. Een rij met acties houdt het op twee symbolen en
+de verwoestende staat als rood rechts. De helper `ico(naam)` en de knopvariant
+`ibtn(naam, tekst, actie, klasse)` in `index.html` zijn de enige plek waar
+symbolen gedefinieerd worden; `controle/ontwerp.mjs` faalt op een knop zonder
+naam en `controle/rondloop.mjs` op een actieknop zonder of met een te klein
+symbool.
+
 ## Tekst
 
 Nederlands met Ierse kleur, zoals de groep het zelf zou zeggen. Kleine letters,
@@ -90,7 +104,8 @@ berekende stijl. Hij faalt op: kleurverloop of schaduw op kaarten, een gloed op 
 achtergrond, emoji als watermerk of icoon, vervaagde navigatie, koppen met
 letterspatie in hoofdletters, ontbrekende focusringen, ontbrekende
 bewegingsuitzondering, knoppen die krimpen bij indrukken, oneindige animaties,
-zichtbare tekst onder 12px, tikdoelen onder 40px, contrast onder 4,5:1 en
+zichtbare tekst onder 12px, tikdoelen onder 40px, contrast onder 4,5:1, knoppen
+zonder toegankelijke naam, aktieknoppen zonder of met te klein symbool, en
 horizontaal schuif op 390px breed. De schermafbeeldingen van elke pagina komen in
 `controle/scherm/`.
 

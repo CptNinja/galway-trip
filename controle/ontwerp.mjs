@@ -54,6 +54,8 @@ const audit = `(() => {
   });
   const kleineTekst = tekst.filter(el => px(getComputedStyle(el).fontSize) < 11.5).map(el => el.tagName + ' ' + px(getComputedStyle(el).fontSize) + 'px ' + el.textContent.trim().slice(0, 24));
   const krap = knopen.filter(el => el.getBoundingClientRect().height < 40).map(el => (el.textContent.trim().slice(0, 20) || el.id || 'knop') + ' ' + Math.round(el.getBoundingClientRect().height) + 'px');
+  const leeg = knopen.filter(el => !(el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent).trim()).map(el => (el.className || el.id || 'knop') + ' in ' + (el.closest('section,header,nav,#modal')?.className || el.closest('section,header,nav,#modal')?.tagName || '?'));
+  const onheleIconen = [...document.querySelectorAll('.ico-btn')].filter(el => { const icoon = el.querySelector('svg.ico'); return !icoon || px(getComputedStyle(icoon).width) < 14 || !(el.getAttribute('aria-label') || '').trim(); }).map(el => el.className + ' ' + Math.round(el.getBoundingClientRect().width) + 'px');
   const kontrast = {};
   const body = document.body;
   const kaart = document.querySelector('.card') || body;
@@ -81,6 +83,8 @@ const audit = `(() => {
     pulsatie: /animation[^;]*\\binfinite\\b/.test(heleboel),
     kleineTekst: kleineTekst.slice(0, 5),
     krappeKnopen: krap.slice(0, 5),
+    knoppenZonderNaam: leeg.slice(0, 5),
+    iconenOnvolledig: onheleIconen.slice(0, 5),
     kontrast,
     horizontaal: document.documentElement.scrollWidth > window.innerWidth + 1,
   };
@@ -184,6 +188,8 @@ const eisen = rapport => [
   ['geen oneindige animaties', !rapport.pulsatie, rapport.pulsatie],
   ['geen tekst onder 12px', rapport.kleineTekst.length === 0, rapport.kleineTekst.join(', ')],
   ['tikdoelen ≥ 40px', rapport.krappeKnopen.length === 0, rapport.krappeKnopen.join(', ')],
+  ['geen knop zonder naam', rapport.knoppenZonderNaam.length === 0, rapport.knoppenZonderNaam.join(', ')],
+  ['iconen volledig en vernoemd', rapport.iconenOnvolledig.length === 0, rapport.iconenOnvolledig.join(', ')],
   ['contrast ≥ 4,5', Object.values(rapport.kontrast).every(waarde => waarde >= 4.5), JSON.stringify(rapport.kontrast)],
   ['past op het scherm', !rapport.horizontaal, rapport.horizontaal],
 ];

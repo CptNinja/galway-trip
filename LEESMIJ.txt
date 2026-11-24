@@ -31,6 +31,9 @@ De app kan elkaars gegevens overnemen tussen telefoons. Dat staat aan als bij he
 DE APP BIJWERKEN
 Iedere wijziging gaat via deploy/deploy.py (zie CLAUDE.md): Terraform zet de infrastructuur neer, dat script publiceert de bestanden en zorgt dat telefoons de nieuwe versie ophalen. Wie publiceert, heeft de AWS-inlog van de groep nodig; de sleutel van de kamer staat in AWS SSM en komt nooit in de repository.
 
+VRAGEN EN KAARTEN
+De app komt met 250 vragen en stellingen in tien soorten en 200 opdrachten in zes soorten. De opdrachten blijven aan tafel: raden, wedden, gokken en iets opbiechten — geen optreden voor vreemden. Feitelijke kaarten en vragen eindigen met "Antwoord: …"; bij een vraag lees je alleen voor tot het streepje, de rest is voor de voorlezer. Bij het openen worden de vragen en kaarten vanzelf bijgewerkt: wat er te veel of dubbel in stond wordt opgeruimd, en eigen vragen en eigen opdrachten blijven staan.
+
 BELANGRIJK
 - Zonder kamersynchronisatie staat elke telefoon op zichzelf; met synchronisatie (hierboven) pak je elkaars wijzigingen over. Foto's blijven in beide gevallen lokaal.
 - Maak via Meer > Back-up regelmatig een JSON-export. Foto's staan er niet in: download ze afzonderlijk uit het fotoalbum. Een JSON-import vervangt tekstgegevens; foto's worden niet teruggezet via de app.

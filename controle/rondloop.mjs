@@ -94,6 +94,14 @@ pas.push((typeof raam === 'string' && raam.length > 4 && !/Klaar voor de craic/.
 const wiel = await waarde(`(function(){go('Rad');return new Promise(function(d){setTimeout(function(){var c=document.querySelector('.wheel');d(c?c.width+'x'+c.height:'geen canvas')},250)})})()`);
 pas.push((/^\d+x[1-9]/.test(wiel) ? 'OK   ' : 'FAIL ') + `wiel tekent: ${wiel}`);
 
+const akties = await waarde(`(function(){go('Pubs');var rij=document.querySelector('#app section.card');var knopen=[...rij.querySelectorAll('.ico-btn')];editPub(S.pubs[0].id);var sluit=document.querySelector('#modal .spread button');var meting=sluit.getBoundingClientRect();var uit={tellen:knopen.length,aria:knopen.map(b=>b.getAttribute('aria-label')).join('|'),svg:rij.querySelectorAll('svg.ico').length,sluitSvg:sluit.querySelectorAll('svg.ico').length,sluitNaam:sluit.getAttribute('aria-label')||'',vierkant:meting.width>=40&&meting.height>=40};closeModal();return JSON.stringify(uit)})()`).then(JSON.parse);
+const aktiesOk = akties.tellen === 2 && akties.svg === 2 && akties.sluitSvg === 1 && akties.sluitNaam === 'Sluiten' && akties.vierkant;
+pas.push((aktiesOk ? 'OK   ' : 'FAIL ') + `pub-akties: ${akties.svg} iconen (${akties.aria}), modal sluiten ${akties.sluitSvg}x "${akties.sluitNaam}"`);
+
+const vragenStap = await waarde(`(async function(){go('Vragen');var kies=document.querySelector('#app select');var rubrieken=kies?[...kies.options].map(o=>o.textContent.trim()).filter(Boolean):[];var knop=document.getElementById('question-spin');if(knop)knop.click();await new Promise(function(d){setTimeout(d,1600)});var tekst=(document.getElementById('question')||{}).textContent||'';return JSON.stringify({rubrieken:rubrieken,tekst:tekst,gekend:Object.values(qsets).flat().indexOf(tekst)>=0})})()`).then(JSON.parse);
+const vragenGoed = vragenStap.rubrieken.includes('Kroegpraat') && !vragenStap.rubrieken.some(r => /Grappig|Controversie|Spicy/i.test(r)) && vragenStap.gekend;
+pas.push((vragenGoed ? 'OK   ' : 'FAIL ') + `vragenpagina: ${vragenStap.rubrieken.length} rubrieken (${vragenStap.rubrieken.slice(0, 3).join(', ')}…), vraag "${vragenStap.tekst.slice(0, 46)}"`);
+
 const verbinding = await waarde(`(function(){var c=window.GALWAY_CONFIG||{};return JSON.stringify({api:c.api||'',ruimte:c.room||'',sleutel:!!c.key})})()`).then(JSON.parse);
 if (process.argv[3] === 'blokkeer') {
   pas.push((/^https:\/\/.+lambda-url/.test(verbinding.api) && verbinding.sleutel && !!verbinding.ruimte ? 'OK   ' : 'FAIL ') + `productieconfig: ${verbinding.api.slice(0, 44)}… ruimte ${verbinding.ruimte}`);

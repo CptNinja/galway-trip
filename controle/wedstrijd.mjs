@@ -1,53 +1,8 @@
 // Wedstrijdcontrole: draai de echte app-script plus duels.js in een namaak-DOM
-// speel dan het volledige wedstrijdverloop af. Uitvoeren: node controle/wedstrijd.mjs
-import fs from 'node:fs';
-import vm from 'node:vm';
+// en speel het volledige wedstrijdverloop af. Uitvoeren: node controle/wedstrijd.mjs
+import { maakVenster } from './namaak.mjs';
 
-const root = new URL('..', import.meta.url).pathname;
-const html = fs.readFileSync(root + 'index.html', 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const duels = fs.readFileSync(root + 'duels.js', 'utf8');
-
-const storage = new Map();
-const el = () => ({
-  innerHTML: '', textContent: '', value: '', className: '', hidden: false, dataset: {}, style: {}, scrollTop: 0, listeners: {},
-  classList: { _s: new Set(), add(n) { this._s.add(n); }, remove(n) { this._s.delete(n); }, toggle(n) { this._s.has(n) ? this._s.delete(n) : this._s.add(n); }, contains(n) { return this._s.has(n); } },
-  setAttribute() {}, appendChild() {}, show() {}, showModal() {}, close() {}, focus() {}, blur() {},
-  addEventListener(t, f) { this.listeners[t] = f; }, querySelectorAll() { return []; }, querySelector() { return null; },
-});
-const nodes = new Map();
-const document = {
-  getElementById(id) { if (!nodes.has(id)) nodes.set(id, el()); return nodes.get(id); },
-  createElement: el,
-  createDocumentFragment: el,
-  querySelectorAll() { return []; },
-  querySelector(sel) { return typeof sel === 'string' && sel.startsWith('#') ? this.getElementById(sel.slice(1)) : null; },
-  addEventListener() {},
-  body: el(),
-  head: el(),
-  documentElement: el(),
-  visibilityState: 'visible',
-};
-const ctx = vm.createContext({
-  console, Math, Date, JSON, Intl, URL,
-  Blob: class {},
-  setTimeout: () => 0, clearTimeout: () => {}, setInterval: () => 0, clearInterval: () => {},
-  localStorage: { getItem: k => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)), removeItem: k => storage.delete(k) },
-  indexedDB: { open: () => ({ set onsuccess(f) {}, set onerror(f) {}, set onupgradeneeded(f) {} }) },
-  document,
-  location: { protocol: 'https:', href: 'https://x.example/', origin: 'https://x.example' },
-  navigator: { serviceWorker: { register: () => Promise.resolve() }, vibrate: () => {}, onLine: true },
-  fetch: () => Promise.reject(new Error('no network in harness')),
-  confirm: () => true,
-  alert: () => {},
-  matchMedia: () => ({ matches: false, addEventListener() {} }),
-  crypto: { randomUUID: () => 'r' + Math.random().toString(36).slice(2) },
-});
-vm.runInContext('var window=this;this.addEventListener=()=>{};this.scrollTo=()=>{};window=this;', ctx);
-vm.runInContext(script, ctx, { filename: 'index.html' });
-vm.runInContext(duels, ctx, { filename: 'duels.js' });
-
-const run = code => vm.runInContext(code, ctx);
+const { run } = maakVenster();
 const out = [];
 const ok = (name, cond, extra = '') => out.push((cond ? 'OK   ' : 'FAIL ') + name + (cond ? '' : ' :: ' + String(extra).slice(0, 260)));
 
