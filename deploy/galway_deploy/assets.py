@@ -30,7 +30,7 @@ CONTENT_TYPES = {
 }
 
 #: Files that define what the installed app is; always re-checked by the browser.
-REVALIDATE = ("index.html", "sync.js", "duels.js", "config.js", "service-worker.js", "manifest.json")
+REVALIDATE = ("index.html", "sync.js", "duels.js", "pubgolf.js", "config.js", "service-worker.js", "manifest.json")
 CACHE_REVALIDATE = "public, max-age=0, must-revalidate"
 CACHE_STABLE = "public, max-age=604800"
 

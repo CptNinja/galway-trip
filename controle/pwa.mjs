@@ -59,7 +59,7 @@ const bruikbare = await waarde(`(async function(){
     const naam = cachesLijst.find(n=>/^galway-/.test(n));
     if (naam) {
       const cache = await caches.open(naam);
-      const wegen = ['./','./index.html','./config.js','./sync.js','./duels.js','./manifest.json','./icon-192.png','./icon-512.png'];
+      const wegen = ['./','./index.html','./config.js','./sync.js','./duels.js','./pubgolf.js','./manifest.json','./icon-192.png','./icon-512.png'];
       const gemist = [];
       for (const weg of wegen) if (!(await cache.match(weg,{ignoreSearch:true}) || await cache.match(new URL(weg,location.href).pathname))) gemist.push(weg);
       if (!gemist.length || beurt === 39) return JSON.stringify({werkend:true,cache:naam,gemist:gemist});

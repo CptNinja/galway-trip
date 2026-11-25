@@ -67,7 +67,7 @@ for (const tab of ['Home', 'Pubs', 'Pubopdrachten', 'Challenges', 'Vragen', 'Bin
   await pagina(`go('${tab}');'ok'`, `tab ${tab}`, (inhoud, lang) => lang > 40 && !/undefined|NaN|\[object/.test(inhoud));
 }
 
-const subStappen = ['Vandaag & planning', 'Fotoalbum', 'Uitgaven', 'Wrapped', 'Handige info', 'Spelers', 'Back-up', 'Scores', 'Configuratie', 'Wedstryd'];
+const subStappen = ['Vandaag & planning', 'Fotoalbum', 'Uitgaven', 'Wrapped', 'Handige info', 'Spelers', 'Back-up', 'Scores', 'Configuratie', 'Wedstryd', 'Pubgolf'];
 for (const naam of subStappen) {
   await pagina(`sub('${naam}');'ok'`, `meer ${naam}`, (inhoud, lang) => lang > 30 && !/undefined|NaN|\[object/.test(inhoud));
 }
